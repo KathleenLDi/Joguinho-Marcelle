@@ -157,7 +157,7 @@
     },
     {
       title: "O coração roubado 💘",
-      text: "Depois de muitos dias conversando, elas marcaram a data para se conhecer. Mas, de repente, o coração da Kath foi roubado!"
+      text: "Depois de muitos dias conversando, elas marcaram a data para se conhecerem. Mas, de repente, o coração da Kath foi roubado!"
     },
     {
       title: "Missão para Marcelle",
@@ -179,7 +179,7 @@
       storyText.textContent = storySteps[step].text;
       dots().forEach((d,i)=> d.classList.toggle('active', i===step));
 
-      // Se agora estamos no último passo, mostra "Começar"
+      
       if (step === storySteps.length - 1){
         nextBtn.style.display = 'none';
         startBtn.style.display = 'inline-block';
