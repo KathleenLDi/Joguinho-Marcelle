@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kath → Marcelle: missão corações 💘</title>
+<style>
+  :root{
+    --bg:#f084cf; --card:#f70404; --text:#f7f7ff; --sub:#c9c9ff;
+    --accent:#e06489; --accent-2:#ff4d6d; --win:#36d399; --lose:#f59e0b;
+  }
+  *{box-sizing:border-box}
+  html,body{
+    height:100%;margin:0;
+    background:radial-gradient(1200px 800px at 70% -20%, #233, transparent),var(--bg);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial,sans-serif;
+    color:var(--text)
+  }
+  .wrap{display:flex;flex-direction:column;min-height:100%}
+  header{
+    display:flex;gap:.75rem; align-items:center; justify-content:center; padding:1rem; position:sticky; top:0;
+    background:linear-gradient(180deg, rgba(15,18,36,.95), rgba(15,18,36,.6) 70%, transparent);
+    backdrop-filter: blur(6px); z-index:5
+  }
+  .pill{display:inline-flex; gap:.5rem; align-items:center; padding:.5rem .8rem; background:var(--card);
+    border:1px solid rgba(255,255,255,.08); border-radius:999px; font-weight:600}
+  .pill small{color:var(--sub); font-weight:500}
+  .goal{color:#ffd166}
+
+  main{flex:1; display:grid; place-items:center; padding:1rem}
+  .board{
+    position:relative; width:min(900px, 100%); height:70vh; min-height:420px;
+    background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+    border:1px solid rgba(255,255,255,.08); border-radius:24px; overflow:hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 0 60px rgba(255,255,255,.02);
+  }
+  .center-abs{position:absolute; inset:0; display:grid; place-items:center}
+  .card{
+    background:var(--card); padding:1.4rem; border-radius:20px; width:min(520px, 92%);
+    text-align:center; border:1px solid rgba(255,255,255,.08); box-shadow:0 20px 30px rgba(0,0,0,.35)
+  }
+  .card h1,.card h2{margin:.3rem 0 .6rem}
+  .card p{margin:.2rem 0 1rem; color:var(--sub)}
+  .btn{
+    appearance:none; border:0; background:var(--accent); color:white; font-weight:700;
+    padding:.9rem 1.2rem; border-radius:14px; cursor:pointer; transition:.2s transform,.2s opacity, .2s box-shadow;
+    box-shadow:0 10px 20px rgba(124,58,237,.25);
+  }
+  .btn:hover{transform:translateY(-1px)}
+  .hint{position:absolute; inset:auto 0 1rem 0; text-align:center; color:var(--sub); font-size:.95rem}
+  .story-dot{display:inline-block; width:8px; height:8px; border-radius:999px; background:#464a78; margin:0 3px}
+  .story-dot.active{background:#9aa0ff}
+
+  /* corações */
+  .heart{
+    position:absolute; width:44px; height:44px; cursor:pointer; transform:translate(-50%,-50%) scale(1);
+    transition:transform .08s; user-select:none; touch-action:none; will-change:transform, top, left, opacity;
+    filter: drop-shadow(0 6px 10px rgba(0,0,0,.35));
+  }
+  .heart:hover{transform:translate(-50%,-50%) scale(1.06)}
+  .heart:active{transform:translate(-50%,-50%) scale(.92)}
+  .pop{
+    position:absolute; pointer-events:none; font-weight:800; color:#fff; text-shadow:0 2px 6px rgba(0,0,0,.4);
+    animation:pop 700ms ease forwards; will-change:transform,opacity;
+  }
+  @keyframes pop{
+    from{opacity:0; transform:translate(-50%,-30%) scale(.8)}
+    20%{opacity:1}
+    to{opacity:0; transform:translate(-50%,-120%) scale(1.1)}
+  }
+
+  /* fim */
+  .badge{padding:.25rem .6rem; border-radius:999px; font-size:.85rem; font-weight:700; display:inline-block}
+  .badge.win{background:rgba(54,211,153,.18); color:var(--win); border:1px solid rgba(54,211,153,.5)}
+  .badge.lose{background:rgba(245,158,11,.18); color:var(--lose); border:1px solid rgba(245,158,11,.5)}
+  .confetti{position:absolute; inset:0; pointer-events:none; overflow:hidden}
+  .piece{position:absolute; width:10px; height:16px; opacity:0; animation:fall linear forwards}
+  @keyframes fall{
+    0%{transform:translateY(-20%) rotate(0deg); opacity:1}
+    100%{transform:translateY(120vh) rotate(540deg); opacity:1}
+  }
+  footer{padding:1rem; text-align:center; color:var(--sub); font-size:.9rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="pill" id="time"><small>tempo</small> <span>—</span></div>
+    <div class="pill" id="score"><small>corações</small> <span>0</span></div>
+    <div class="pill"><small>meta</small> <span class="goal" id="goal">15</span></div>
+  </header>
+
+  <main>
+    <div class="board" id="board" aria-label="Tabuleiro do jogo">
+      <!-- HISTÓRIA EM 3 TELAS -->
+      <div class="center-abs" id="story">
+        <div class="card">
+          <div style="font-size:2rem">📖</div>
+          <h1 id="storyTitle">Era uma vez...</h1>
+          <p id="storyText">
+            Era uma vez duas garotas que começaram a conversar virtualmente, mas moravam em estados diferentes.
+          </p>
+          <div style="margin:.5rem 0 .9rem">
+            <span class="story-dot active"></span><span class="story-dot"></span><span class="story-dot"></span>
+          </div>
+          <button class="btn" id="nextBtn">Próximo</button>
+          <!-- Botão Começar aparece SÓ no último slide -->
+          <button class="btn" id="startBtn" style="display:none;margin-top:.5rem">Começar</button>
+        </div>
+      </div>
+
+      <!-- TELA DE FIM -->
+      <div class="center-abs" id="end" style="display:none">
+        <div class="card">
+          <div id="resultIcon" style="font-size:2rem">🏁</div>
+          <h2 id="endTitle">Rota liberada até a Marcelle!</h2>
+          <p id="endMsg">Corações suficientes capturados. A Kath já pode chegar até você, Marcelle. 💙</p>
+          <div id="badge" class="badge win">missão cumprida</div>
+          <div style="margin-top:1rem">
+            <button class="btn" id="againBtn">Jogar de novo</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="confetti" id="confetti" aria-hidden="true"></div>
+      <p class="hint" id="live" aria-live="polite"></p>
+    </div>
+  </main>
+
+  <footer>
+    Feito para Marcelle ✨ por Kath.
+  </footer>
+</div>
+
+<!-- Modelo do coração -->
+<template id="heartTpl">
+  <div class="heart" role="button" aria-label="Coração. Toque para capturar.">
+    <svg viewBox="0 0 92 92" width="44" height="44" aria-hidden="true">
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#ff8097"/>
+          <stop offset="100%" stop-color="#ff4d6d"/>
+        </linearGradient>
+      </defs>
+      <path d="M46 80C8 52 4 28 18 18c10-7 22-3 28 6 6-9 18-13 28-6 14 10 10 34-28 62z" fill="url(#g)"/>
+    </svg>
+  </div>
+</template>
+
+<script>
+(() => {
+  /*** HISTÓRIA ***/
+  const storySteps = [
+    {
+      title: "Era uma vez...",
+      text: "Era uma vez duas garotas que começaram a conversar virtualmente, mas moravam em estados diferentes."
+    },
+    {
+      title: "O coração roubado 💘",
+      text: "Depois de muitos dias conversando, elas marcaram a data para se conhecer. Mas, de repente, o coração da Kath foi roubado!"
+    },
+    {
+      title: "Missão para Marcelle",
+      text: "Marcelle, capture todos os corações que aparecerem. Cada um abre um caminho para que a Kath chegue até você."
+    }
+  ];
+  const story = document.getElementById('story');
+  const storyTitle = document.getElementById('storyTitle');
+  const storyText = document.getElementById('storyText');
+  const dots = () => story.querySelectorAll('.story-dot');
+  const nextBtn = document.getElementById('nextBtn');
+  const startBtn = document.getElementById('startBtn');
+
+  let step = 0;
+  nextBtn.addEventListener('click', () => {
+    step++;
+    if (step < storySteps.length){
+      storyTitle.textContent = storySteps[step].title;
+      storyText.textContent = storySteps[step].text;
+      dots().forEach((d,i)=> d.classList.toggle('active', i===step));
+
+      // Se agora estamos no último passo, mostra "Começar"
+      if (step === storySteps.length - 1){
+        nextBtn.style.display = 'none';
+        startBtn.style.display = 'inline-block';
+      }
+    } else {
+      // fallback: se clicar além do último, inicia o jogo
+      startGame();
+    }
+  });
+
+  startBtn.addEventListener('click', () => {
+    story.style.display = 'none';
+    startGame();
+  });
+
+  /*** JOGO ***/
+  const GAME_TIME = 20;        // segundos
+  const GOAL_POINTS = 15;      // meta de corações
+  const SPAWN_EVERY = 650;     // ms
+  const HEART_LIFE = 2000;     // ms
+  const MAX_HEARTS = 12;
+
+  const board = document.getElementById('board');
+  const end = document.getElementById('end');
+  const endTitle = document.getElementById('endTitle');
+  const endMsg = document.getElementById('endMsg');
+  const resultIcon = document.getElementById('resultIcon');
+  const badge = document.getElementById('badge');
+  const againBtn = document.getElementById('againBtn');
+  const timePill = document.querySelector('#time span');
+  const scorePill = document.querySelector('#score span');
+  const goalSpan = document.getElementById('goal');
+  const confetti = document.getElementById('confetti');
+  const live = document.getElementById('live');
+  const heartTpl = document.getElementById('heartTpl');
+
+  let timeLeft = GAME_TIME;
+  let score = 0;
+  let running = false;
+  let loops = { timer: null, spawner: null };
+  goalSpan.textContent = GOAL_POINTS;
+  timePill.textContent = fmtTime(timeLeft);
+
+  againBtn.addEventListener('click', startGame);
+
+  function fmtTime(s){
+    const mm = String(Math.floor(s/60)).padStart(2,'0');
+    const ss = String(s%60).padStart(2,'0');
+    return `${mm}:${ss}`;
+  }
+
+  function reset(){
+    stop();
+    [...board.querySelectorAll('.heart,.pop')].forEach(e=>e.remove());
+    [...confetti.querySelectorAll('.piece')].forEach(e=>e.remove());
+    score = 0; timeLeft = GAME_TIME; running = false;
+    scorePill.textContent = score;
+    timePill.textContent = fmtTime(timeLeft);
+    end.style.display = 'none';
+  }
+
+  function stop(){
+    running = false;
+    clearInterval(loops.timer);
+    clearInterval(loops.spawner);
+  }
+
+  function startGame(){
+    reset();
+    running = true;
+    timePill.textContent = fmtTime(timeLeft);
+
+    loops.timer = setInterval(() => {
+      timeLeft--;
+      timePill.textContent = fmtTime(timeLeft);
+      if (timeLeft <= 0){ return finish(); }
+    }, 1000);
+
+    loops.spawner = setInterval(spawnHeart, SPAWN_EVERY);
+    for (let i=0;i<4;i++) spawnHeart();
+    announce("Começou! Capture os corações 💘");
+  }
+
+  function spawnHeart(){
+    if (!running) return;
+    const onBoard = board.querySelectorAll('.heart').length;
+    if (onBoard >= MAX_HEARTS) return;
+
+    const el = heartTpl.content.firstElementChild.cloneNode(true);
+    const {w,h} = boardRect();
+
+    const pad = 30;
+    const x = pad + Math.random()*(w - pad*2);
+    const y = pad + Math.random()*(h - pad*2);
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+
+    const driftX = (Math.random()*16-8);
+    const driftY = (Math.random()*16-8);
+    el.animate([{transform:'translate(-50%,-50%) scale(1)'},
+                {transform:`translate(calc(-50% + ${driftX}px), calc(-50% + ${driftY}px)) scale(1.03)`}],
+                {duration: HEART_LIFE, easing:'ease-in-out'});
+
+    el.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      if (!running) return;
+      collect(el);
+    }, {passive:false});
+
+    const t = setTimeout(()=>{ el.remove(); }, HEART_LIFE);
+    el.dataset.timeout = t;
+    board.appendChild(el);
+  }
+
+  function collect(el){
+    clearTimeout(el.dataset.timeout);
+    const p = document.createElement('div');
+    p.className = 'pop';
+    p.textContent = '+1';
+    p.style.left = el.style.left;
+    p.style.top  = el.style.top;
+    board.appendChild(p);
+    setTimeout(()=>p.remove(), 700);
+
+    el.animate([{transform:'translate(-50%,-50%) scale(1)'},
+                {transform:'translate(-50%,-50%) scale(0)'}],
+                {duration:120, easing:'ease-out'});
+    setTimeout(()=> el.remove(), 110);
+
+    score++;
+    scorePill.textContent = score;
+    announce(`Coração capturado! Total ${score}.`);
+
+    if (score % 3 === 0) burstConfetti(12);
+    if (score >= GOAL_POINTS) finish(true);
+  }
+
+  function finish(win=false){
+    if (!running && end.style.display === 'grid') return;
+    stop();
+    [...board.querySelectorAll('.heart')].forEach(e=>e.remove());
+    end.style.display = 'grid';
+    if (win){
+      resultIcon.textContent = '🏁';
+      endTitle.textContent = 'Rota liberada até a Marcelle!';
+      endMsg.textContent = 'Você abriu o caminho com corações suficientes. A Kath já pode chegar até você, Marcelle. 💙';
+      badge.textContent = 'missão cumprida';
+      badge.className = 'badge win';
+      burstConfetti(50, true);
+      announce('Vitória! Caminho aberto.');
+    } else {
+      resultIcon.textContent = '⏳';
+      endTitle.textContent = 'Quase lá!';
+      endMsg.textContent = 'Faltou pouco para abrir o caminho. Tenta mais uma?';
+      badge.textContent = 'tente novamente';
+      badge.className = 'badge lose';
+      announce('Tempo esgotado. Tente novamente!');
+    }
+  }
+
+  function boardRect(){
+    const r = board.getBoundingClientRect();
+    return {w:r.width, h:r.height};
+  }
+
+  function burstConfetti(n=30, big=false){
+    const colors = ['#ffd166','#70e1f5','#ff4d6d','#7c3aed','#36d399','#f59e0b','#c084fc','#60a5fa'];
+    const {w} = boardRect();
+    for (let i=0;i<n;i++){
+      const piece = document.createElement('div');
+      piece.className = 'piece';
+      piece.style.left = (Math.random()*w) + 'px';
+      piece.style.top = '-10px';
+      piece.style.background = colors[(Math.random()*colors.length)|0];
+      piece.style.animationDuration = (1.8 + Math.random()* (big?1.8:1.2)) + 's';
+      piece.style.animationDelay = (Math.random()*0.3) + 's';
+      piece.style.transform = `translateY(-20%) rotate(${Math.random()*180}deg)`;
+      confetti.appendChild(piece);
+      setTimeout(()=> piece.remove(), 3500);
+    }
+  }
+
+  function announce(msg){ document.getElementById('live').textContent = msg; }
+})();
+</script>
+</body>
+</html>
